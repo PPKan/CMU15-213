@@ -274,7 +274,7 @@ int isLessOrEqual(int x, int y) {
   int signx = x >> 31 & 1;
   int signy = y >> 31 & 1;
 
-  int bitXor = signx ^ signy;
+  int bitXor = signx ^ signy; 
 
   return (bitXor & signx) | ((!bitXor) & (!yminx));
 }
