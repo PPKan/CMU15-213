@@ -1,7 +1,7 @@
 /* 
  * CS:APP Data Lab 
  * 
- * <Please put your name and userid here>
+ * Peter Kan 087
  * 
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
@@ -143,7 +143,18 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return 2;
+  /* ^(notAandB, notBandA), or = nand(~A, ~B) */
+  
+  int notX = ~x;
+  int notY = ~y;
+  int notXandY = notX & y;
+  int notYandX = notY & x;
+  int notnotXandY = ~notXandY;
+  int notnotYandX = ~notYandX;
+  int var1 = notnotXandY & notnotYandX;
+  int result = ~var1;
+
+  return result;
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -152,8 +163,8 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-
-  return 2;
+  /* shift left the constant 1 by 31 and you will get tmin */
+  return (1 << 31);
 
 }
 //2
@@ -165,7 +176,16 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+  /*  */
+  int tmin = x + 1;
+  int neg1 = tmin + x;
+  int zero = ~neg1;
+  int pretzero = !tmin; //to exculde x = -1
+  int result = zero + pretzero;
+  
+  return !result;
+
+
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +196,11 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+  /* I have no clue what it is about */
+  int mask = 0xAA + (0xAA << 8);
+  mask = mask + (mask << 16);
+
+  return !((mask & x) ^ mask);
 }
 /* 
  * negate - return -x 
@@ -186,7 +210,9 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  /* flip all number then plus one */
+  int result = ~x + 1;
+  return result;
 }
 //3
 /* 
@@ -199,7 +225,18 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  /* 通过位级运算计算 x 是否在 0x30 - 0x39 范围内就是这个题的解决方案。那如何用位级
+  运算来操作呢？我们可以使用两个数，一个数是加上比0x39大的数后符号由正变负，另一个数是
+  加上比0x30小的值时是负数。这两个数是代码中初始化的 upperBound 和 lowerBound，然
+  后加法之后获取其符号位判断即可。*/
+  int tMin = 0x1 << 31;
+  int tMax = ~tMin;
+  int upperbound = ~(tMin | 0x39); // equals to tMax - 0x39
+  int lowerbound = ~0x30 + 1; // equals to 0 - 0x30;
+  int upperResult = tMin&(upperbound+x) >> 31; //will be zero if positive
+  int lowerResult = tMin&(lowerbound+x) >> 31; // will be 0xFFFFFFF if negative
+  
+  return !(upperResult | lowerResult);
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +246,17 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  /* 如果我们根据 x 的布尔值转换为全0或全1是不是更容易解决了，即 x==0 时位表示是全0的， 
+  x!=0 时位表示是全1的。这就是1-2行代码，通过获取其布尔值0或1，然后求其补码（0的补码是本
+  身，位表示全0；1的补码是-1，位表示全1）得到想要的结果。然后通过位运算获取最终值。*/
+  
+  // if x is 0, x remains zero, else x is 1
+  x = !!x;
+  // if x is 0, x remains 0, else x is -1 (all one)
+  x = ~x + 1;
+  // if true, (x & y) makes y, else, make zero, if false, (~x & z) makes z, else zero 
+  // because x will turn into all one
+  return (x & y) | (~x & z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,7 +266,19 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  /* x <= y means y - x >= 0 means x + (-y) <= 0 */
+  /* (y >=0 && x <0) || ((x * y >= 0) && (y + (-x) >= 0)) */
+
+  int neg1 = ~0;
+  int negY = ~y + 1;
+  int add = x + negY;
+  int msb = add >> 31;
+  int result = !!msb;
+  
+  int signx = x >> 31;
+  int signy = y >> 31;
+
+  return (signx ) | !(add & neg1) | result;
 }
 //4
 /* 
@@ -231,7 +290,18 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+  /* 逻辑非就是非0为1，非非0为0。利用其补码（取反加一）的性质，除了0和最小数（
+  * 符号位为1，其余为0），外其他数都是互为相反数关系（符号位取位或为1）。0和最小
+  * 数的补码是本身，不过0的符号位与其补码符号位位或为0，最小数的为1。利用这一点
+  * 得到解决方法。  
+  * 
+  * x 小于 0 时结果为 1，否则检查 x + TMAX 是否进位为负数。
+  * */
+  
+  int negX = x >> 31 & 1; //if negX = 1, x is negative
+  int posX = (~x + 1) >> 31 & 1; // is posX == 1, x is positive
+
+  return (negX | posX) ^ 1; //flip the result
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -246,7 +316,35 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+  /* 如果是一个正数，则需要找到它最高的一位（假设是n）是1的，再加上符号位，结果为n+1；
+  * 如果是一个负数，则需要知道其最高的一位是0的（例如4位的1101和三位的101补码表示的是一
+  * 个值：-3，最少需要3位来表示）。 
+  * 
+  * 这里我利用了之前 conditional 的做法，讲 x 为负的情况排除掉，统一处理正整数。统
+  * 计位数可以采取二分法查找最高位的 1，但做了几轮测试就会发现二分法存在漏位的问题。
+  * 不过这只在偶数位发生，奇数位不受影响。因此为了排除这个影响，我暴力地用 x |= (x << 1) 
+  * 的办法让最高位的 1 左移 1 位。
+  * */
+
+  // 1. turn negative to positive (to avoid counting extra bit)
+  int sign = x >> 31;
+  // just get rid of MSB, and add 1 at last section
+  x = (sign & ~x) | (~sign & x);
+
+  int b16, b8, b4, b2, b1, b0; //total 31, you can choose any you want
+  b16 = !!(x >> 16) << 4; //to indicate the number
+  x = x >> b16; //if there's 16 bits, shift it
+  b8 = !!(x >> 8) << 3;
+  x = x >> b8;
+  b4 = !!(x >> 4) << 2;
+  x = x >> b4;
+  b2 = !!(x >> 2) << 1;
+  x = x >> b2;
+  b1 = !!(x >> 1);
+  x = x >> b1;
+  b0 = x;
+
+  return b16+b8+b4+b2+b1+b0+1;
 }
 //float
 /* 
@@ -261,7 +359,19 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  /* 首先排除无穷小、0、无穷大和非数值NaN，此时浮点数指数部分（真正指数+bias）
+   * 分别存储的的为0，0，,255，255。这些情况，无穷大和NaN都只需要返回参数（ [公式] ），
+   * 无穷小和0只需要将原数乘二再加上符号位就行了（并不会越界）。剩下的情况，如果指数+1之后为
+   * 指数为255则返回原符号无穷大，否则返回指数+1之后的原符号数。   */
+
+  unsigned exp = (uf << 1) >> 24;
+  unsigned frac = uf << 9 >> 9;
+  unsigned msb = uf >> 31 << 31;
+  if (exp == 0) return msb | uf << 1;
+  if (exp == 255) return uf;
+  exp += 1;
+  return msb | (exp << 23) | frac;
+
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -276,7 +386,19 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  
+  unsigned exp = (uf << 1) >> 24;
+  unsigned frac = uf << 9 >> 9;
+  unsigned msb = uf >> 31;
+  int e = (uf << 1) >> 24;
+  e = e - 127;
+  if (e < 0) return 0;
+  if (e > 31) return 0x80000000u;
+
+  if (msb == 1) return -(1 << e);
+  if (msb == 0) return 1 << e;
+
+  return 0; // it shouldn't be triggered.
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -292,5 +414,16 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+  
+  if (x < 0) return 0;
+  if (x + 127 < 0) return (255 << 23);
+
+  unsigned e, exp;
+  e = x;
+  exp = e + 127;
+
+  if (exp >= 255) return (255 << 23);
+  if (exp < 127) return 0;
+
+  return exp << 23;
 }
