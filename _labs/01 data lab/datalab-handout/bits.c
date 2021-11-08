@@ -266,19 +266,17 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  /* x <= y means y - x >= 0 means x + (-y) <= 0 */
-  /* (y >=0 && x <0) || ((x * y >= 0) && (y + (-x) >= 0)) */
+  /* x <= y means y - x >= 0, */
 
-  int neg1 = ~0;
-  int negY = ~y + 1;
-  int add = x + negY;
-  int msb = add >> 31;
-  int result = !!msb;
-  
-  int signx = x >> 31;
-  int signy = y >> 31;
+  int negX = ~x + 1;
+  int yminx = (y + negX) >> 31 & 1; //the reason of & 1 is because arthimetic shift
 
-  return (signx ) | !(add & neg1) | result;
+  int signx = x >> 31 & 1;
+  int signy = y >> 31 & 1;
+
+  int bitXor = signx ^ signy;
+
+  return (bitXor & signx) | ((!bitXor) & (!yminx));
 }
 //4
 /* 
